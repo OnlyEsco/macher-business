@@ -1,0 +1,21 @@
+Ich will eine Website erstellen mit Discord login und bot der bot soll nach timern pingen, Der bot soll 2x Timer funktion haben und in minuten einstellbar sein / Einmal soll er dann pingen mit "Deine Pflanzen sind fertig" und einmal mit "Dein Camper ist fertig"
+Man soll auf der Website verfolgen können wielange der timer noch geht. Datenbank soll über MongoDB Atlas laufen, Die Datenbank soll auf der Website dann einen Reiter haben mit "Ankauf" und dort anzeigen: Wer hat gekauft und was und Preis. Ein Admin Bereich wo man auch die Berechtigung vergeben kann, dass man ihn sieht. Website ist über Render Free.
+
+Stelle die Timer für Camper auf 90 Minuten und für Pflanzen 12h
+
+
+MACHER WEBSITE
+
+Einen Überreiter für Mitgliederliste die mit Admin Rechten erweiterbar ist (Zeilen) dort soll drin sein Name, Rang, Handy Nummer, Invite Datum Wocheneinzahlung, Wochenabgabe. 
+Es soll einen Reset Knopf geben wo man die Wocheneinzahlung und Wochenabgabe für alle Zeilen clearen kann.
+Einen Überreiter für Fahrzeuge (Man trägt Namen, Kennzeichen und Bemerkung ein)
+Einen Überreiter für Ankauf wo man einträgt Ankäufer, Artikel, Menge, Preis, Verkäufer und Datum
+Einen Überreiter für Routen die unterteilt sind in AMPHETAMIN ROUTE, WESTEN ROUTE, ZINK ROUTE, EISEN ROUTE, KUPFER ROUTE und HOLZ ROUTE.
+Bei Westen soll es den Reiter Feld 1 und Feld 2 (Bei den Feld 1 und 2 soll oben links stehen "Werkzeug: Schere" mit einem Bild) geben und Verarbeiter, Bei Amphetamin Feld (bei dem Feld soll oben links stehen "Werkzeug: Sichel" und ein Bild)  und Verarbeiter 1 und Verarbeiter 2, Bei Zink Eisen und Kupfer jeweils Feld (Bei den Feldern soll jeweils "Werkzeug: Spitzhacke" und ein Bild) und Schnell Verarbeiter und Workstation, Bei Holz Feld (bei dem Feld soll oben links stehen "Werkzeug: Axt" und ein Bild) und Verarbeiter
+Man soll die Routen als Admin Bearbeiten können also Bilder einfügen können	
+Im Überreiter Admin soll man die Fahrzeuglogs sehen und eine Statistik vom Reiter Ankauf.
+Admin soll nur ich setzen und entfernen können im Adminreiter
+			
+Das komplette design in Schwarz mit roten Akzenten		
+
+Website und bot sollen auch laufen wenn mein PC aus ist
