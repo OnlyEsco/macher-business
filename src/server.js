@@ -44,10 +44,11 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
+// Render setzt PORT automatisch - immer process.env.PORT nutzen!
 const PORT = process.env.PORT || 3000;
 
 initDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Macher Business läuft auf http://localhost:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Macher Business läuft auf Port ${PORT}`);
   });
 }).catch(console.error);
