@@ -8,8 +8,7 @@ export const db = createClient({
 });
 
 export async function initDB() {
-  await db.batch([
-    // Users / Members table
+  const statements = [
     `CREATE TABLE IF NOT EXISTS members (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -20,16 +19,12 @@ export async function initDB() {
       wochenabgabe REAL DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-
-    // Admins table
     `CREATE TABLE IF NOT EXISTS admins (
       discord_id TEXT PRIMARY KEY,
       username TEXT,
       added_by TEXT,
       added_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-
-    // Fahrzeuge
     `CREATE TABLE IF NOT EXISTS fahrzeuge (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -37,8 +32,6 @@ export async function initDB() {
       bemerkung TEXT DEFAULT '',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-
-    // Fahrzeug Logs
     `CREATE TABLE IF NOT EXISTS fahrzeug_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       aktion TEXT NOT NULL,
@@ -49,8 +42,6 @@ export async function initDB() {
       user_name TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-
-    // Ankauf
     `CREATE TABLE IF NOT EXISTS ankauf (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ankaefer TEXT NOT NULL,
@@ -61,8 +52,6 @@ export async function initDB() {
       datum TEXT DEFAULT '',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-
-    // Routen - Zuweisung von Personen zu Slots
     `CREATE TABLE IF NOT EXISTS route_slots (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       route TEXT NOT NULL,
@@ -70,8 +59,6 @@ export async function initDB() {
       person TEXT DEFAULT '',
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-
-    // Route Bilder
     `CREATE TABLE IF NOT EXISTS route_images (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       route TEXT NOT NULL,
@@ -79,7 +66,11 @@ export async function initDB() {
       image_path TEXT,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-  ], 'write');
+  ];
+
+  for (const sql of statements) {
+    await db.execute(sql);
+  }
 
   // Seed default route slots if empty
   const existing = await db.execute('SELECT COUNT(*) as cnt FROM route_slots');
