@@ -1562,7 +1562,37 @@ function fmt(n) {
 }
 
 // ===== START =====
-init();
+async function handleOAuthCode() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const error = params.get('error');
+  if (error) { window.history.replaceState({}, '', '/'); init(); return; }
+  if (code) {
+    window.history.replaceState({}, '', '/');
+    document.getElementById('login-screen').innerHTML = `
+      <div class="login-logo">MACHER <span>BUSINESS</span></div>
+      <div class="login-sub">▸ VERBINDE MIT DISCORD... ◂</div>
+    `;
+    try {
+      const res = await fetch('/auth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const data = await res.json();
+      if (data.ok) { window.location.reload(); return; }
+      console.error('Login Fehler:', data);
+      document.getElementById('login-screen').innerHTML = `
+        <div class="login-logo">MACHER <span>BUSINESS</span></div>
+        <div class="login-sub" style="color:var(--red)">▸ FEHLER: ${data.detail?.error_description || data.error} ◂</div>
+        <a href="/auth/discord" class="discord-btn">NOCHMAL VERSUCHEN</a>
+      `;
+    } catch(e) { console.error(e); window.location.href = '/'; }
+    return;
+  }
+  init();
+}
+handleOAuthCode();
 </script>
 </body>
 </html>

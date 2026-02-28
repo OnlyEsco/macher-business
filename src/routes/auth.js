@@ -2,70 +2,67 @@ import express from 'express';
 
 const router = express.Router();
 
-const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
-const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const DISCORD_CALLBACK_URL = process.env.DISCORD_CALLBACK_URL;
-const SCOPES = 'identify';
-
 router.get('/discord', (req, res) => {
   const params = new URLSearchParams({
-    client_id: DISCORD_CLIENT_ID,
-    redirect_uri: DISCORD_CALLBACK_URL,
+    client_id: process.env.DISCORD_CLIENT_ID,
+    redirect_uri: process.env.DISCORD_CALLBACK_URL,
     response_type: 'code',
-    scope: SCOPES,
+    scope: 'identify',
   });
   res.redirect(`https://discord.com/api/oauth2/authorize?${params}`);
 });
 
-router.get('/discord/callback', async (req, res) => {
+// Step 1: Receive code, send to frontend to complete exchange
+router.get('/discord/callback', (req, res) => {
   const { code, error } = req.query;
+  if (error || !code) return res.redirect('/?error=auth');
+  // Pass code to frontend - frontend will call /auth/token
+  res.redirect(`/?code=${encodeURIComponent(code)}`);
+});
 
-  if (error || !code) {
-    console.error('❌ Discord callback error:', error);
-    return res.redirect('/?error=auth');
-  }
+// Step 2: Frontend calls this with the code
+router.post('/token', async (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ error: 'Kein Code' });
 
   try {
-    // Exchange code for token
     const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id: DISCORD_CLIENT_ID,
-        client_secret: DISCORD_CLIENT_SECRET,
+        client_id: process.env.DISCORD_CLIENT_ID,
+        client_secret: process.env.DISCORD_CLIENT_SECRET,
         grant_type: 'authorization_code',
         code,
-        redirect_uri: DISCORD_CALLBACK_URL,
+        redirect_uri: process.env.DISCORD_CALLBACK_URL,
       }),
     });
 
     const tokenData = await tokenRes.json();
-    console.log('🔵 Token response status:', tokenRes.status);
+    console.log('🔵 Token Status:', tokenRes.status, JSON.stringify(tokenData).substring(0, 100));
 
     if (!tokenRes.ok) {
-      console.error('❌ Token exchange failed:', JSON.stringify(tokenData));
-      return res.redirect('/?error=auth');
+      console.error('❌ Token Fehler:', JSON.stringify(tokenData));
+      return res.status(400).json({ error: 'Token fehlgeschlagen', detail: tokenData });
     }
 
-    // Get user info
     const userRes = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
 
     const user = await userRes.json();
-    console.log('✅ Eingeloggt:', user.username, '| ID:', user.id);
+    console.log('✅ User:', user.username, user.id);
 
     req.session.user = {
       id: user.id,
       username: user.username,
       avatar: user.avatar,
-      discriminator: user.discriminator,
     };
 
-    res.redirect('/');
+    res.json({ ok: true, user: req.session.user });
   } catch (err) {
-    console.error('❌ Auth Fehler:', err.message);
-    res.redirect('/?error=auth');
+    console.error('❌ Fehler:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
