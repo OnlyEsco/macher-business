@@ -1,46 +1,76 @@
 import express from 'express';
-import passport from 'passport';
 
 const router = express.Router();
 
-router.get('/discord', (req, res, next) => {
-  console.log('🔵 Discord Login gestartet...');
-  console.log('🔵 CLIENT_ID:', process.env.DISCORD_CLIENT_ID ? process.env.DISCORD_CLIENT_ID.substring(0,8) + '...' : 'FEHLT!');
-  console.log('🔵 CLIENT_SECRET:', process.env.DISCORD_CLIENT_SECRET ? '✅ vorhanden (' + process.env.DISCORD_CLIENT_SECRET.length + ' Zeichen)' : '❌ FEHLT!');
-  console.log('🔵 CALLBACK_URL:', process.env.DISCORD_CALLBACK_URL || '❌ FEHLT!');
-  passport.authenticate('discord')(req, res, next);
+const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+const DISCORD_CALLBACK_URL = process.env.DISCORD_CALLBACK_URL;
+const SCOPES = 'identify';
+
+router.get('/discord', (req, res) => {
+  const params = new URLSearchParams({
+    client_id: DISCORD_CLIENT_ID,
+    redirect_uri: DISCORD_CALLBACK_URL,
+    response_type: 'code',
+    scope: SCOPES,
+  });
+  res.redirect(`https://discord.com/api/oauth2/authorize?${params}`);
 });
 
-router.get('/discord/callback', (req, res, next) => {
-  console.log('🔵 Callback von Discord erhalten...');
-  passport.authenticate('discord', (err, user, info) => {
-    if (err) {
-      console.error('❌ OAuth Fehler Typ:', err.constructor.name);
-      console.error('❌ OAuth Fehler Message:', err.message);
-      if (err.oauthError) {
-        console.error('❌ OAuth Fehler Data:', JSON.stringify(err.oauthError));
-      }
-      return res.redirect('/?error=auth');
-    }
-    if (!user) {
-      console.error('❌ Kein User. Info:', JSON.stringify(info));
-      return res.redirect('/?error=auth');
-    }
-    req.logIn(user, (loginErr) => {
-      if (loginErr) {
-        console.error('❌ Login Fehler:', loginErr.message);
-        return res.redirect('/?error=auth');
-      }
-      console.log('✅ Eingeloggt:', user.username, '| ID:', user.id);
-      return res.redirect('/');
+router.get('/discord/callback', async (req, res) => {
+  const { code, error } = req.query;
+
+  if (error || !code) {
+    console.error('❌ Discord callback error:', error);
+    return res.redirect('/?error=auth');
+  }
+
+  try {
+    // Exchange code for token
+    const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: DISCORD_CLIENT_ID,
+        client_secret: DISCORD_CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: DISCORD_CALLBACK_URL,
+      }),
     });
-  })(req, res, next);
+
+    const tokenData = await tokenRes.json();
+    console.log('🔵 Token response status:', tokenRes.status);
+
+    if (!tokenRes.ok) {
+      console.error('❌ Token exchange failed:', JSON.stringify(tokenData));
+      return res.redirect('/?error=auth');
+    }
+
+    // Get user info
+    const userRes = await fetch('https://discord.com/api/users/@me', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+
+    const user = await userRes.json();
+    console.log('✅ Eingeloggt:', user.username, '| ID:', user.id);
+
+    req.session.user = {
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar,
+      discriminator: user.discriminator,
+    };
+
+    res.redirect('/');
+  } catch (err) {
+    console.error('❌ Auth Fehler:', err.message);
+    res.redirect('/?error=auth');
+  }
 });
 
 router.get('/logout', (req, res) => {
-  req.logout(() => {
-    res.redirect('/');
-  });
+  req.session.destroy(() => res.redirect('/'));
 });
 
 export default router;

@@ -1,8 +1,5 @@
 import express from 'express';
 import session from 'express-session';
-import passport from 'passport';
-import { Strategy as DiscordStrategy } from 'passport-discord';
-import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
@@ -28,21 +25,12 @@ app.use(session({
   cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }
 }));
 
-// Passport
-passport.use(new DiscordStrategy({
-  clientID: process.env.DISCORD_CLIENT_ID,
-  clientSecret: process.env.DISCORD_CLIENT_SECRET,
-  callbackURL: process.env.DISCORD_CALLBACK_URL,
-  scope: ['identify']
-}, (accessToken, refreshToken, profile, done) => {
-  done(null, profile);
-}));
+// Make user available via req.user
+app.use((req, res, next) => {
+  req.user = req.session.user || null;
+  next();
+});
 
-passport.serializeUser((user, done) => done(null, user));
-passport.deserializeUser((user, done) => done(null, user));
-
-app.use(passport.initialize());
-app.use(passport.session());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
