@@ -1112,6 +1112,7 @@ async function api(url, options = {}) {
 
 // ===== TABS =====
 function switchTab(tabName) {
+  console.log('[TAB] Switching to:', tabName);
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(x => {
     x.classList.remove('active');
@@ -1119,10 +1120,14 @@ function switchTab(tabName) {
   });
   const tabBtn = document.querySelector('.tab[data-tab="' + tabName + '"]');
   const tabContent = document.getElementById('tab-' + tabName);
+  console.log('[TAB] Button found:', !!tabBtn, '| Content found:', !!tabContent);
   if (tabBtn) tabBtn.classList.add('active');
   if (tabContent) {
+    console.log('[TAB] Classes before:', tabContent.className);
     tabContent.classList.remove('hidden');
     tabContent.classList.add('active');
+    console.log('[TAB] Classes after:', tabContent.className);
+    console.log('[TAB] Computed display:', window.getComputedStyle(tabContent).display);
   }
 }
 
@@ -1132,6 +1137,7 @@ document.querySelectorAll('.tab').forEach(t => {
 
 // ===== INIT =====
 async function init() {
+  console.log('[INIT] Starting...');
 
   try {
     const me = await api('/api/me');
@@ -1154,6 +1160,7 @@ async function init() {
       document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
       // Ensure admin tab-content doesn't have hidden blocking it
       document.getElementById('tab-admin').classList.remove('hidden');
+      console.log('[INIT] Admin tab-admin classes:', document.getElementById('tab-admin').className);
     }
     if (me.isSuperAdmin) {
       document.getElementById('super-admin-section')?.classList.remove('hidden');
