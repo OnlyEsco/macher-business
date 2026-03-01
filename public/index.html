@@ -184,8 +184,8 @@
   /* ---- CONTENT ---- */
   main { flex: 1; padding: 28px; max-width: 1400px; margin: 0 auto; width: 100%; }
 
-  .tab-content { display: none; animation: fadeIn 0.2s ease; }
-  .tab-content.active { display: block; }
+  .tab-content { animation: fadeIn 0.2s ease; }
+  .tab-content.active { }
 
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
@@ -1090,8 +1090,11 @@ let pendingImageUpload = null;
 
 // ===== INIT =====
 async function init() {
-  // Hide admin tab content by default
-  document.getElementById('tab-admin').style.display = 'none';
+  // Hide ALL tab contents at start
+  document.querySelectorAll('.tab-content').forEach(x => x.style.display = 'none');
+  // Show default tab (members)
+  const defaultTab = document.getElementById('tab-members');
+  if (defaultTab) defaultTab.style.display = 'block';
   
   try {
     const me = await api('/api/me');
@@ -1148,8 +1151,14 @@ async function api(url, options = {}) {
 
 // ===== TABS =====
 function switchTab(tabName) {
+  // Hide ALL tab contents first
+  document.querySelectorAll('.tab-content').forEach(x => {
+    x.classList.remove('active');
+    x.style.display = 'none';
+  });
+  // Remove active from all tab buttons
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+  // Show only the selected tab
   const tabBtn = document.querySelector(`.tab[data-tab="${tabName}"]`);
   const tabContent = document.getElementById('tab-' + tabName);
   if (tabBtn) tabBtn.classList.add('active');
