@@ -611,6 +611,24 @@
 
     <!-- ANKAUF -->
     <div class="tab-content" id="tab-ankauf">
+
+      <div style="margin-bottom:28px">
+        <div class="section-header" style="margin-bottom:16px">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--text-bright);border-left:3px solid var(--red);padding-left:12px">Preistabelle</div>
+          <button class="btn btn-red admin-only hidden" onclick="openPreisModal()">+ ARTIKEL</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Artikel</th><th>Preis</th><th>Preis UG</th><th class="admin-only hidden">Aktionen</th></tr>
+            </thead>
+            <tbody id="preistabelle-body">
+              <tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:30px">Lade...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="section-header">
         <div class="section-title">Ankauf</div>
         <button class="btn btn-red admin-only hidden" onclick="openModal('ankauf-modal')">+ EINTRAG</button>
@@ -625,24 +643,6 @@
           </tbody>
         </table>
       </div>
-
-      <div style="margin-top:36px">
-        <div class="section-header">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--text-bright);border-left:3px solid var(--red);padding-left:12px">Preistabelle</div>
-          <button class="btn btn-red admin-only hidden" onclick="openPreisModal()">+ ARTIKEL</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Artikel</th><th>Preis</th><th>Preis UG</th><th class="admin-only hidden">Aktionen</th></tr>
-            </thead>
-            <tbody id="preistabelle-body">
-              <tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:40px">Lade...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
 
     <!-- ROUTEN -->
     <div class="tab-content" id="tab-routen">
@@ -670,7 +670,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-AMPHETAMIN-feld"></div>
           </div>
         </div>
         <div class="route-card">
@@ -682,7 +681,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-AMPHETAMIN-verarbeiter_1"></div>
           </div>
         </div>
         <div class="route-card">
@@ -694,7 +692,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-AMPHETAMIN-verarbeiter_2"></div>
           </div>
         </div>
       </div>
@@ -711,7 +708,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-WESTEN-feld_1"></div>
           </div>
         </div>
         <div class="route-card">
@@ -724,7 +720,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-WESTEN-feld_2"></div>
           </div>
         </div>
         <div class="route-card">
@@ -736,7 +731,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-WESTEN-verarbeiter"></div>
           </div>
         </div>
       </div>
@@ -753,7 +747,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-ZINK-feld"></div>
           </div>
         </div>
         <div class="route-card">
@@ -763,7 +756,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-ZINK-schnell_verarbeiter"></div>
           </div>
         </div>
         <div class="route-card">
@@ -773,7 +765,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-ZINK-workstation"></div>
           </div>
         </div>
       </div>
@@ -790,7 +781,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-EISEN-feld"></div>
           </div>
         </div>
         <div class="route-card">
@@ -800,7 +790,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-EISEN-schnell_verarbeiter"></div>
           </div>
         </div>
         <div class="route-card">
@@ -810,7 +799,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-EISEN-workstation"></div>
           </div>
         </div>
       </div>
@@ -827,7 +815,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-KUPFER-feld"></div>
           </div>
         </div>
         <div class="route-card">
@@ -837,7 +824,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-KUPFER-schnell_verarbeiter"></div>
           </div>
         </div>
         <div class="route-card">
@@ -847,7 +833,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-KUPFER-workstation"></div>
           </div>
         </div>
       </div>
@@ -864,7 +849,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-HOLZ-feld"></div>
           </div>
         </div>
         <div class="route-card">
@@ -874,7 +858,6 @@
               <div class="placeholder-text">📷<br>Bild hochladen</div>
               <div class="route-upload-overlay">BILD ÄNDERN</div>
             </div>
-            <div id="slots-HOLZ-verarbeiter"></div>
           </div>
         </div>
       </div>
@@ -1452,31 +1435,7 @@ async function loadRoutes() {
 }
 
 function renderRouteSlots() {
-  allSlots.forEach(slot => {
-    const containerId = `slots-${slot.route}-${slot.slot_type}`;
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    const readonly = !currentUser?.isAdmin;
-    container.innerHTML = `
-      <div class="slot-person">
-        <span class="slot-label">👤 Person</span>
-        <input class="slot-input" 
-          value="${esc(slot.person)}"
-          ${readonly ? 'readonly' : ''}
-          data-slot-id="${slot.id}"
-          placeholder="${readonly ? 'Nicht besetzt' : 'Name eingeben...'}"
-        >
-      </div>
-    `;
-    if (!readonly) {
-      const input = container.querySelector('input');
-      let timer;
-      input.addEventListener('input', () => {
-        clearTimeout(timer);
-        timer = setTimeout(() => saveSlot(slot.id, input.value), 600);
-      });
-    }
-  });
+  // Slots hidden as per user request
 }
 
 async function saveSlot(id, person) {
