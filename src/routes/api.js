@@ -213,3 +213,33 @@ router.delete('/admins/:discord_id', requireAuth, async (req, res) => {
 });
 
 export default router;
+
+// ---- PREISTABELLE ----
+router.get('/preistabelle', requireAuth, async (req, res) => {
+  const rows = await db.execute('SELECT * FROM preistabelle ORDER BY artikel ASC');
+  res.json(rows.rows);
+});
+
+router.post('/preistabelle', requireAdmin, async (req, res) => {
+  const { artikel, preis, preis_ug } = req.body;
+  if (!artikel) return res.status(400).json({ error: 'Artikel erforderlich' });
+  const result = await db.execute({
+    sql: 'INSERT INTO preistabelle (artikel,preis,preis_ug) VALUES (?,?,?)',
+    args: [artikel, preis||0, preis_ug||0]
+  });
+  res.json({ id: Number(result.lastInsertRowid) });
+});
+
+router.put('/preistabelle/:id', requireAdmin, async (req, res) => {
+  const { artikel, preis, preis_ug } = req.body;
+  await db.execute({
+    sql: 'UPDATE preistabelle SET artikel=?,preis=?,preis_ug=? WHERE id=?',
+    args: [artikel, preis||0, preis_ug||0, req.params.id]
+  });
+  res.json({ ok: true });
+});
+
+router.delete('/preistabelle/:id', requireAdmin, async (req, res) => {
+  await db.execute({ sql: 'DELETE FROM preistabelle WHERE id=?', args: [req.params.id] });
+  res.json({ ok: true });
+});

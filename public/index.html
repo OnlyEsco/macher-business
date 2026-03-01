@@ -625,6 +625,23 @@
           </tbody>
         </table>
       </div>
+
+      <div style="margin-top:36px">
+        <div class="section-header">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--text-bright);border-left:3px solid var(--red);padding-left:12px">Preistabelle</div>
+          <button class="btn btn-red admin-only hidden" onclick="openPreisModal()">+ ARTIKEL</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Artikel</th><th>Preis</th><th>Preis UG</th><th class="admin-only hidden">Aktionen</th></tr>
+            </thead>
+            <tbody id="preistabelle-body">
+              <tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:40px">Lade...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- ROUTEN -->
@@ -1037,6 +1054,33 @@
   </div>
 </div>
 
+
+<!-- Preistabelle Modal -->
+<div class="modal-overlay" id="preis-modal">
+  <div class="modal">
+    <div class="modal-title" id="preis-modal-title">ARTIKEL HINZUFÜGEN</div>
+    <input type="hidden" id="preis-id">
+    <div class="form-grid">
+      <div class="form-group form-full">
+        <label>Artikel</label>
+        <input type="text" id="preis-artikel" placeholder="Artikelname">
+      </div>
+      <div class="form-group">
+        <label>Preis</label>
+        <input type="number" id="preis-preis" placeholder="0.00" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Preis UG</label>
+        <input type="number" id="preis-ug" placeholder="0.00" step="0.01">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('preis-modal')">ABBRECHEN</button>
+      <button class="btn btn-red" onclick="savePreis()">SPEICHERN</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast"></div>
 
@@ -1085,6 +1129,7 @@ async function init() {
     loadMembers();
     loadFahrzeuge();
     loadAnkauf();
+    loadPreistabelle();
     loadRoutes();
     if (me.isAdmin) {
       loadAdminData();
@@ -1322,6 +1367,76 @@ function deleteAnkauf(id) {
   confirm('Eintrag löschen?', '', async () => {
     await api(`/api/ankauf/${id}`, { method: 'DELETE' });
     loadAnkauf();
+    toast('Gelöscht', 'success');
+  });
+}
+
+
+// ===== PREISTABELLE =====
+async function loadPreistabelle() {
+  const data = await api('/api/preistabelle');
+  const tbody = document.getElementById('preistabelle-body');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:30px">Keine Einträge</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td><strong>${esc(p.artikel)}</strong></td>
+      <td style="color:var(--red-bright);font-weight:700">${fmt(p.preis)}€</td>
+      <td style="color:#ff8800;font-weight:700">${fmt(p.preis_ug)}€</td>
+      <td class="admin-only ${currentUser?.isAdmin ? '' : 'hidden'}">
+        <div class="td-actions">
+          <button class="btn btn-outline btn-sm" onclick='editPreis(${JSON.stringify(p)})'>EDIT</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePreis(${p.id})">DEL</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openPreisModal() {
+  document.getElementById('preis-modal-title').textContent = 'ARTIKEL HINZUFÜGEN';
+  document.getElementById('preis-id').value = '';
+  document.getElementById('preis-artikel').value = '';
+  document.getElementById('preis-preis').value = '';
+  document.getElementById('preis-ug').value = '';
+  openModal('preis-modal');
+}
+
+function editPreis(p) {
+  document.getElementById('preis-modal-title').textContent = 'ARTIKEL BEARBEITEN';
+  document.getElementById('preis-id').value = p.id;
+  document.getElementById('preis-artikel').value = p.artikel;
+  document.getElementById('preis-preis').value = p.preis;
+  document.getElementById('preis-ug').value = p.preis_ug;
+  openModal('preis-modal');
+}
+
+async function savePreis() {
+  const id = document.getElementById('preis-id').value;
+  const body = {
+    artikel: document.getElementById('preis-artikel').value,
+    preis: document.getElementById('preis-preis').value || 0,
+    preis_ug: document.getElementById('preis-ug').value || 0,
+  };
+  if (!body.artikel) return toast('Artikel erforderlich', 'error');
+  try {
+    if (id) {
+      await api(`/api/preistabelle/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+    } else {
+      await api('/api/preistabelle', { method: 'POST', body: JSON.stringify(body) });
+    }
+    closeModal('preis-modal');
+    loadPreistabelle();
+    toast('Gespeichert!', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deletePreis(id) {
+  confirm('Artikel löschen?', '', async () => {
+    await api(`/api/preistabelle/${id}`, { method: 'DELETE' });
+    loadPreistabelle();
     toast('Gelöscht', 'success');
   });
 }

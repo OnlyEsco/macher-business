@@ -76,6 +76,14 @@ export async function initDB() {
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  await exec(`CREATE TABLE IF NOT EXISTS preistabelle (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    artikel TEXT NOT NULL,
+    preis REAL DEFAULT 0,
+    preis_ug REAL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
   const existing = await db.execute('SELECT COUNT(*) as cnt FROM route_slots');
   if (Number(existing.rows[0].cnt) === 0) {
     const defaultSlots = [
