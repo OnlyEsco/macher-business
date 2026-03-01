@@ -185,7 +185,7 @@
   main { flex: 1; padding: 28px; max-width: 1400px; margin: 0 auto; width: 100%; }
 
   .tab-content { display: none; animation: fadeIn 0.2s ease; }
-  .tab-content.active { display: block !important; }
+  .tab-content.active { display: block; }
 
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
@@ -864,7 +864,7 @@
     </div>
 
     <!-- ADMIN -->
-    <div class="tab-content admin-only hidden" id="tab-admin">
+    <div class="tab-content" id="tab-admin">
       <div class="section-header">
         <div class="section-title">Admin Bereich</div>
       </div>
@@ -1090,6 +1090,9 @@ let pendingImageUpload = null;
 
 // ===== INIT =====
 async function init() {
+  // Hide admin tab content by default
+  document.getElementById('tab-admin').style.display = 'none';
+  
   try {
     const me = await api('/api/me');
     currentUser = me;
@@ -1150,7 +1153,10 @@ function switchTab(tabName) {
   const tabBtn = document.querySelector(`.tab[data-tab="${tabName}"]`);
   const tabContent = document.getElementById('tab-' + tabName);
   if (tabBtn) tabBtn.classList.add('active');
-  if (tabContent) tabContent.classList.add('active');
+  if (tabContent) {
+    tabContent.classList.add('active');
+    tabContent.style.display = 'block';
+  }
 }
 
 document.querySelectorAll('.tab').forEach(t => {
