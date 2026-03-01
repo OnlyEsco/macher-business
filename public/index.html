@@ -184,8 +184,10 @@
   /* ---- CONTENT ---- */
   main { flex: 1; padding: 28px; max-width: 1400px; margin: 0 auto; width: 100%; }
 
-  .tab-content { animation: fadeIn 0.2s ease; }
-  .tab-content.active { }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn 0.2s ease; }
+  #tab-routen.active { display: block; }
+  #tab-admin.active { display: block; }
 
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
@@ -568,7 +570,7 @@
 
   <main>
     <!-- MEMBERS -->
-    <div class="tab-content active" id="tab-members">
+    <div class="tab-content" id="tab-members">
       <div class="section-header">
         <div class="section-title">Mitgliederliste</div>
         <div class="btn-group">
@@ -1112,15 +1114,15 @@ async function api(url, options = {}) {
 function switchTab(tabName) {
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(x => {
-    x.classList.remove('hidden');
-    x.style.display = 'none';
+    x.classList.remove('active');
+    x.removeAttribute('style');
   });
   const tabBtn = document.querySelector('.tab[data-tab="' + tabName + '"]');
   const tabContent = document.getElementById('tab-' + tabName);
   if (tabBtn) tabBtn.classList.add('active');
   if (tabContent) {
     tabContent.classList.remove('hidden');
-    tabContent.style.display = 'block';
+    tabContent.classList.add('active');
   }
 }
 
@@ -1130,8 +1132,6 @@ document.querySelectorAll('.tab').forEach(t => {
 
 // ===== INIT =====
 async function init() {
-  // Hide all tab contents first
-  document.querySelectorAll('.tab-content').forEach(x => x.style.display = 'none');
 
   try {
     const me = await api('/api/me');
@@ -1152,6 +1152,8 @@ async function init() {
     if (me.isAdmin) {
       document.getElementById('admin-badge').classList.remove('hidden');
       document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+      // Ensure admin tab-content doesn't have hidden blocking it
+      document.getElementById('tab-admin').classList.remove('hidden');
     }
     if (me.isSuperAdmin) {
       document.getElementById('super-admin-section')?.classList.remove('hidden');
