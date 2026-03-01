@@ -68,17 +68,17 @@ router.post('/members/reset-weekly', requireAdmin, async (req, res) => {
 
 // ---- FAHRZEUGE ----
 router.get('/fahrzeuge', requireAuth, async (req, res) => {
-  const rows = await db.execute('SELECT * FROM fahrzeuge ORDER BY id ASC');
+  const rows = await db.execute('SELECT * FROM fahrzeuge ORDER BY id DESC');
   res.json(rows.rows);
 });
 
-router.post('/fahrzeuge', requireAdmin, async (req, res) => {
+router.post('/fahrzeuge', requireAuth, async (req, res) => {
   const { name, kennzeichen, bemerkung } = req.body;
+  const addedBy = req.user.username || req.user.id;
   const result = await db.execute({
-    sql: 'INSERT INTO fahrzeuge (name,kennzeichen,bemerkung) VALUES (?,?,?)',
-    args: [name, kennzeichen, bemerkung||'']
+    sql: 'INSERT INTO fahrzeuge (name,kennzeichen,bemerkung,added_by) VALUES (?,?,?,?)',
+    args: [name, kennzeichen, bemerkung||'', addedBy]
   });
-  // Log
   await db.execute({
     sql: 'INSERT INTO fahrzeug_logs (aktion,fahrzeug_id,kennzeichen,name,user_discord_id,user_name) VALUES (?,?,?,?,?,?)',
     args: ['HINZUGEFÜGT', Number(result.lastInsertRowid), kennzeichen, name, req.user.id, req.user.username]

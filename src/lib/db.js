@@ -35,8 +35,11 @@ export async function initDB() {
     name TEXT NOT NULL,
     kennzeichen TEXT NOT NULL,
     bemerkung TEXT DEFAULT '',
+    added_by TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+  // Add added_by column if not exists (for existing DBs)
+  try { await db.execute("ALTER TABLE fahrzeuge ADD COLUMN added_by TEXT DEFAULT ''"); } catch(e) {}
 
   await exec(`CREATE TABLE IF NOT EXISTS fahrzeug_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

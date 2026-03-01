@@ -598,15 +598,22 @@
     <div class="tab-content" id="tab-fahrzeuge">
       <div class="section-header">
         <div class="section-title">Fahrzeuge</div>
-        <button class="btn btn-red admin-only hidden" onclick="openModal('fahrzeug-modal')">+ FAHRZEUG</button>
+        <div class="btn-group">
+          <button class="btn btn-red" onclick="openModal('fahrzeug-modal')">+ FAHRZEUG</button>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <input type="text" id="fahrzeug-search" placeholder="🔍 Nach Kennzeichen suchen..." 
+          oninput="filterFahrzeuge()"
+          style="width:100%;max-width:400px;background:var(--bg3);border:1px solid var(--border);color:var(--text-bright);padding:10px 16px;font-family:'Rajdhani',sans-serif;font-size:15px;outline:none;">
       </div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Name</th><th>Kennzeichen</th><th>Bemerkung</th><th class="admin-only hidden">Aktionen</th></tr>
+            <tr><th>Name</th><th>Kennzeichen</th><th>Bemerkung</th><th>Eingetragen von</th><th class="admin-only hidden">Aktionen</th></tr>
           </thead>
           <tbody id="fahrzeuge-body">
-            <tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:40px">Lade...</td></tr>
+            <tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:40px">Lade...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1307,18 +1314,35 @@ async function resetWeekly() {
 }
 
 // ===== FAHRZEUGE =====
+let allFahrzeuge = [];
+
 async function loadFahrzeuge() {
-  const data = await api('/api/fahrzeuge');
+  allFahrzeuge = await api('/api/fahrzeuge');
+  renderFahrzeuge(allFahrzeuge);
+}
+
+function filterFahrzeuge() {
+  const q = document.getElementById('fahrzeug-search').value.toLowerCase().trim();
+  if (!q) return renderFahrzeuge(allFahrzeuge);
+  const filtered = allFahrzeuge.filter(f =>
+    f.kennzeichen.toLowerCase().includes(q) ||
+    f.name.toLowerCase().includes(q)
+  );
+  renderFahrzeuge(filtered);
+}
+
+function renderFahrzeuge(data) {
   const tbody = document.getElementById('fahrzeuge-body');
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:40px">Keine Fahrzeuge</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:40px">Keine Fahrzeuge gefunden</td></tr>';
     return;
   }
   tbody.innerHTML = data.map(f => `
     <tr>
       <td><strong>${esc(f.name)}</strong></td>
-      <td class="mono">${esc(f.kennzeichen)}</td>
+      <td class="mono" style="color:var(--red-bright)">${esc(f.kennzeichen)}</td>
       <td>${esc(f.bemerkung)}</td>
+      <td style="color:var(--text-dim);font-size:13px">${esc(f.added_by || '')}</td>
       <td class="admin-only ${currentUser?.isAdmin ? '' : 'hidden'}">
         <div class="td-actions">
           <button class="btn btn-outline btn-sm" onclick='editFahrzeug(${JSON.stringify(f)})'>EDIT</button>
