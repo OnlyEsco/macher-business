@@ -580,8 +580,8 @@
           <thead>
             <tr>
               <th>Name</th><th>Rang</th><th>Handy</th>
-              <th>Invite Datum</th><th>Wocheneinzahlung</th>
-              <th>Wochenabgabe</th><th class="admin-only hidden">Aktionen</th>
+              <th>Invite Datum</th><th>Einzahlung ✓</th>
+              <th>Abgabe ✓</th><th class="admin-only hidden">Aktionen</th>
             </tr>
           </thead>
           <tbody id="members-body">
@@ -939,11 +939,17 @@
       </div>
       <div class="form-group">
         <label>Wocheneinzahlung</label>
-        <input type="number" id="m-einzahlung" placeholder="0" step="0.01">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0">
+          <input type="checkbox" id="m-einzahlung" style="width:20px;height:20px;accent-color:var(--red)">
+          <span style="color:var(--text-dim);font-size:13px">Eingezahlt</span>
+        </div>
       </div>
       <div class="form-group">
         <label>Wochenabgabe</label>
-        <input type="number" id="m-abgabe" placeholder="0" step="0.01">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0">
+          <input type="checkbox" id="m-abgabe" style="width:20px;height:20px;accent-color:var(--red)">
+          <span style="color:var(--text-dim);font-size:13px">Abgegeben</span>
+        </div>
       </div>
     </div>
     <div class="modal-actions">
@@ -1088,54 +1094,6 @@ let allImages = [];
 let confirmCb = null;
 let pendingImageUpload = null;
 
-// ===== INIT =====
-async function init() {
-  // Hide ALL tab contents at start
-  document.querySelectorAll('.tab-content').forEach(x => x.style.display = 'none');
-  // Show default tab (members)
-  const defaultTab = document.getElementById('tab-members');
-  if (defaultTab) defaultTab.style.display = 'block';
-  
-  try {
-    const me = await api('/api/me');
-    currentUser = me;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    document.getElementById('app').style.flexDirection = 'column';
-    document.getElementById('user-name').textContent = me.username;
-    if (me.avatar) {
-      document.getElementById('user-avatar').src = `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png`;
-    } else {
-      document.getElementById('user-avatar').src = `https://cdn.discordapp.com/embed/avatars/0.png`;
-    }
-    if (me.isAdmin) {
-      document.getElementById('admin-badge').classList.remove('hidden');
-      document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-
-    }
-    if (me.isSuperAdmin) {
-      document.getElementById('super-admin-section')?.classList.remove('hidden');
-    }
-    loadMembers();
-    loadFahrzeuge();
-    loadAnkauf();
-    loadPreistabelle();
-    loadRoutes();
-    if (me.isAdmin) {
-      loadAdminData();
-    }
-    if (!me.isAdmin) {
-      // Readonly route slots
-      document.querySelectorAll('.admin-image-upload').forEach(el => {
-        el.style.pointerEvents = 'none';
-        el.querySelector('.route-upload-overlay') && (el.querySelector('.route-upload-overlay').style.display = 'none');
-      });
-    }
-  } catch(e) {
-    // Not logged in - show login
-  }
-}
-
 // ===== API HELPER =====
 async function api(url, options = {}) {
   const res = await fetch(url, {
@@ -1151,26 +1109,70 @@ async function api(url, options = {}) {
 
 // ===== TABS =====
 function switchTab(tabName) {
-  // Hide ALL tab contents first
-  document.querySelectorAll('.tab-content').forEach(x => {
-    x.classList.remove('active');
-    x.style.display = 'none';
-  });
-  // Remove active from all tab buttons
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-  // Show only the selected tab
-  const tabBtn = document.querySelector(`.tab[data-tab="${tabName}"]`);
+  document.querySelectorAll('.tab-content').forEach(x => x.style.display = 'none');
+  const tabBtn = document.querySelector('.tab[data-tab="' + tabName + '"]');
   const tabContent = document.getElementById('tab-' + tabName);
   if (tabBtn) tabBtn.classList.add('active');
-  if (tabContent) {
-    tabContent.classList.add('active');
-    tabContent.style.display = 'block';
-  }
+  if (tabContent) tabContent.style.display = 'block';
 }
 
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => switchTab(t.dataset.tab));
 });
+
+// ===== INIT =====
+async function init() {
+  // Hide all tab contents first
+  document.querySelectorAll('.tab-content').forEach(x => x.style.display = 'none');
+
+  try {
+    const me = await api('/api/me');
+    currentUser = me;
+
+    // Show app, hide login
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('app').style.flexDirection = 'column';
+    document.getElementById('user-name').textContent = me.username;
+    if (me.avatar) {
+      document.getElementById('user-avatar').src = 'https://cdn.discordapp.com/avatars/' + me.id + '/' + me.avatar + '.png';
+    } else {
+      document.getElementById('user-avatar').src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+    }
+
+    // Admin visibility
+    if (me.isAdmin) {
+      document.getElementById('admin-badge').classList.remove('hidden');
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+    }
+    if (me.isSuperAdmin) {
+      document.getElementById('super-admin-section')?.classList.remove('hidden');
+    }
+
+    // Show default tab after everything is set up
+    switchTab('members');
+
+    // Load data
+    loadMembers();
+    loadFahrzeuge();
+    loadAnkauf();
+    loadPreistabelle();
+    loadRoutes();
+    if (me.isAdmin) loadAdminData();
+
+    if (!me.isAdmin) {
+      document.querySelectorAll('.admin-image-upload').forEach(el => {
+        el.style.pointerEvents = 'none';
+        const ov = el.querySelector('.route-upload-overlay');
+        if (ov) ov.style.display = 'none';
+      });
+    }
+  } catch(e) {
+    // Not logged in - show login screen
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+}
 
 document.querySelectorAll('.route-tab').forEach(t => {
   t.addEventListener('click', () => {
@@ -1195,8 +1197,20 @@ async function loadMembers() {
       <td>${esc(m.rang)}</td>
       <td class="mono">${esc(m.handy)}</td>
       <td>${esc(m.invite_datum)}</td>
-      <td style="color:var(--red-bright)">${fmt(m.wocheneinzahlung)}€</td>
-      <td style="color:#ff8800">${fmt(m.wochenabgabe)}€</td>
+      <td style="text-align:center">
+        <input type="checkbox" 
+          ${m.wocheneinzahlung ? 'checked' : ''}
+          ${currentUser?.isAdmin ? '' : 'disabled'}
+          onchange="toggleField(${m.id},'wocheneinzahlung',this.checked)"
+          style="width:18px;height:18px;accent-color:var(--red);cursor:${currentUser?.isAdmin ? 'pointer' : 'default'}">
+      </td>
+      <td style="text-align:center">
+        <input type="checkbox"
+          ${m.wochenabgabe ? 'checked' : ''}
+          ${currentUser?.isAdmin ? '' : 'disabled'}
+          onchange="toggleField(${m.id},'wochenabgabe',this.checked)"
+          style="width:18px;height:18px;accent-color:var(--red);cursor:${currentUser?.isAdmin ? 'pointer' : 'default'}">
+      </td>
       <td class="admin-only ${currentUser?.isAdmin ? '' : 'hidden'}">
         <div class="td-actions">
           <button class="btn btn-outline btn-sm" onclick='editMember(${JSON.stringify(m)})'>EDIT</button>
@@ -1207,6 +1221,17 @@ async function loadMembers() {
   `).join('');
 }
 
+async function toggleField(id, field, value) {
+  try {
+    // Get current member data first
+    const members = await api('/api/members');
+    const m = members.find(x => x.id === id);
+    if (!m) return;
+    const body = { ...m, [field]: value ? 1 : 0 };
+    await api('/api/members/' + id, { method: 'PUT', body: JSON.stringify(body) });
+  } catch(e) { toast(e.message, 'error'); }
+}
+
 function editMember(m) {
   document.getElementById('member-modal-title').textContent = 'MITGLIED BEARBEITEN';
   document.getElementById('member-id').value = m.id;
@@ -1214,8 +1239,8 @@ function editMember(m) {
   document.getElementById('m-rang').value = m.rang;
   document.getElementById('m-handy').value = m.handy;
   document.getElementById('m-invite').value = m.invite_datum;
-  document.getElementById('m-einzahlung').value = m.wocheneinzahlung;
-  document.getElementById('m-abgabe').value = m.wochenabgabe;
+  document.getElementById('m-einzahlung').checked = !!m.wocheneinzahlung;
+  document.getElementById('m-abgabe').checked = !!m.wochenabgabe;
   openModal('member-modal');
 }
 
@@ -1226,8 +1251,8 @@ async function saveMember() {
     rang: document.getElementById('m-rang').value,
     handy: document.getElementById('m-handy').value,
     invite_datum: document.getElementById('m-invite').value,
-    wocheneinzahlung: document.getElementById('m-einzahlung').value || 0,
-    wochenabgabe: document.getElementById('m-abgabe').value || 0,
+    wocheneinzahlung: document.getElementById('m-einzahlung').checked ? 1 : 0,
+    wochenabgabe: document.getElementById('m-abgabe').checked ? 1 : 0,
   };
   if (!body.name) return toast('Name erforderlich', 'error');
   try {
@@ -1241,7 +1266,9 @@ async function saveMember() {
     toast('Gespeichert!', 'success');
     document.getElementById('member-id').value = '';
     document.getElementById('member-modal-title').textContent = 'MITGLIED HINZUFÜGEN';
-    ['m-name','m-rang','m-handy','m-invite','m-einzahlung','m-abgabe'].forEach(id => document.getElementById(id).value = '');
+    ['m-name','m-rang','m-handy','m-invite'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('m-einzahlung').checked = false;
+    document.getElementById('m-abgabe').checked = false;
   } catch(e) { toast(e.message, 'error'); }
 }
 
