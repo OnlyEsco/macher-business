@@ -364,7 +364,8 @@
   }
 
   .route-content { display: none; }
-  .route-content.active { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  #tab-routen { padding-top: 0; }
+  .route-content.active { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 
   .route-card {
     background: var(--bg2);
@@ -1110,11 +1111,17 @@ async function api(url, options = {}) {
 // ===== TABS =====
 function switchTab(tabName) {
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(x => x.style.display = 'none');
+  document.querySelectorAll('.tab-content').forEach(x => {
+    x.classList.remove('hidden');
+    x.style.display = 'none';
+  });
   const tabBtn = document.querySelector('.tab[data-tab="' + tabName + '"]');
   const tabContent = document.getElementById('tab-' + tabName);
   if (tabBtn) tabBtn.classList.add('active');
-  if (tabContent) tabContent.style.display = 'block';
+  if (tabContent) {
+    tabContent.classList.remove('hidden');
+    tabContent.style.display = 'block';
+  }
 }
 
 document.querySelectorAll('.tab').forEach(t => {
