@@ -408,18 +408,19 @@
   .route-card-body { padding: 16px; }
 
   .route-image-area {
-    width: 100%; min-height: 80px;
+    width: 380px; height: 320px;
+    max-width: 100%;
     background: var(--bg3);
     border: 1px dashed var(--border);
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; margin-bottom: 14px;
+    cursor: pointer; margin-bottom: 14px; overflow: hidden;
     transition: border-color 0.2s;
     position: relative;
   }
 
   .route-image-area:hover { border-color: var(--red); }
 
-  .route-image-area img { width: 100%; height: auto; object-fit: contain; display: block; }
+  .route-image-area img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
   .route-image-area .placeholder-text {
     color: var(--text-dim); font-size: 12px;
@@ -1643,13 +1644,14 @@ async function loadAnkaufStats() {
     const grid = document.getElementById('topverkaefer-grid');
     if (grid) {
       const medals = ['🥇','🥈','🥉','4.','5.'];
-      grid.innerHTML = data.byAnkaefer.slice(0,5).map((r,i) => `
+      const vk = data.byVerkaeufer || [];
+      grid.innerHTML = vk.length ? vk.slice(0,5).map((r,i) => `
         <div class="stat-card">
-          <div class="stat-label">${medals[i]} ${esc(r.ankaefer)}</div>
-          <div class="stat-value" style="font-size:22px">${fmt(r.gesamt)}€</div>
-          <div class="stat-sub">${r.cnt} Ankäufe</div>
+          <div class="stat-label">${medals[i]} ${esc(r.verkaeufer)}</div>
+          <div class="stat-value" style="font-size:22px">${r.cnt}</div>
+          <div class="stat-sub">${r.cnt} Verkäufe · ${fmt(r.gesamt)}€</div>
         </div>
-      `).join('') || '<div class="stat-card"><div class="stat-label">Keine Daten</div></div>';
+      `).join('') : '<div class="stat-card"><div class="stat-label">Keine Daten</div><div class="stat-value" style="font-size:20px">-</div></div>';
     }
   } catch(e) {}
 }
