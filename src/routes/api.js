@@ -148,7 +148,7 @@ router.get('/ankauf/stats', requireAdmin, async (req, res) => {
 
 // ---- ANKAUF CLEAR WEEK ----
 router.delete('/ankauf/clear-week', requireAdmin, async (req, res) => {
-  await db.execute("DELETE FROM ankauf WHERE created_at >= datetime('now', '-6 days', 'start of day')");
+  await db.execute("DELETE FROM ankauf WHERE date(created_at) >= date('now', 'weekday 1', '-7 days')");
   res.json({ ok: true });
 });
 
