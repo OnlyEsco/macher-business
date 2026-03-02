@@ -87,11 +87,6 @@ export async function initDB() {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-    await exec(`CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-   value TEXT
-  )`);
-  
   const existing = await db.execute('SELECT COUNT(*) as cnt FROM route_slots');
   if (Number(existing.rows[0].cnt) === 0) {
     const defaultSlots = [
