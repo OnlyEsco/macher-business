@@ -5,13 +5,7 @@ import { db, isAdmin } from '../lib/db.js';
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-  destination: 'public/uploads/',
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 function requireAuth(req, res, next) {
   if (!req.user) return res.status(401).json({ error: 'Nicht eingeloggt' });
@@ -139,16 +133,18 @@ router.delete('/ankauf/:id', requireAdmin, async (req, res) => {
 });
 
 router.get('/ankauf/stats', requireAdmin, async (req, res) => {
-  const total = await db.execute('SELECT COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf');
-  const byArtikel = await db.execute('SELECT artikel, COUNT(*) as cnt, SUM(menge) as gesamtmenge, SUM(preis*menge) as gesamt FROM ankauf GROUP BY artikel ORDER BY gesamt DESC');
-  const byVerkaeufer = await db.execute('SELECT verkaeufer, COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf WHERE verkaeufer != \'\' GROUP BY verkaeufer ORDER BY cnt DESC');
-  const byAnkaefer = await db.execute('SELECT ankaefer, COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf GROUP BY ankaefer ORDER BY gesamt DESC');
+  const resetRow = await db.execute("SELECT value FROM settings WHERE key='week_reset'");
+  const since = resetRow.rows[0]?.value || '2000-01-01';
+  const total = await db.execute({ sql: 'SELECT COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf WHERE created_at > ?', args: [since] });
+  const byArtikel = await db.execute({ sql: 'SELECT artikel, COUNT(*) as cnt, SUM(menge) as gesamtmenge, SUM(preis*menge) as gesamt FROM ankauf WHERE created_at > ? GROUP BY artikel ORDER BY gesamt DESC', args: [since] });
+  const byAnkaefer = await db.execute({ sql: 'SELECT ankaefer, COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf WHERE created_at > ? GROUP BY ankaefer ORDER BY cnt DESC', args: [since] });
+  const byVerkaeufer = await db.execute({ sql: "SELECT verkaeufer, COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf WHERE created_at > ? AND verkaeufer != '' GROUP BY verkaeufer ORDER BY cnt DESC", args: [since] });
   res.json({ total: total.rows[0], byArtikel: byArtikel.rows, byAnkaefer: byAnkaefer.rows, byVerkaeufer: byVerkaeufer.rows });
 });
 
 // ---- ANKAUF CLEAR WEEK ----
 router.delete('/ankauf/clear-week', requireAdmin, async (req, res) => {
-  await db.execute("DELETE FROM ankauf WHERE date(created_at) >= date('now', 'weekday 1', '-7 days')");
+  await db.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('week_reset', datetime('now'))");
   res.json({ ok: true });
 });
 
@@ -189,6 +185,22 @@ router.post('/routes/image', requireAdmin, upload.single('image'), async (req, r
     });
   }
   res.json({ image_path });
+});
+
+// Bild hochladen - als Base64 in DB
+router.post('/routes/image', requireAdmin, upload.single('image'), async (req, res) => {
+  const { route, slot_type } = req.body;
+  if (!req.file) return res.status(400).json({ error: 'Kein Bild' });
+  const base64 = req.file.buffer.toString('base64');
+  const mimeType = req.file.mimetype;
+  const dataUrl = `data:${mimeType};base64,${base64}`;
+  const existing = await db.execute({ sql: 'SELECT id FROM route_images WHERE route=? AND slot_type=?', args: [route, slot_type] });
+  if (existing.rows.length > 0) {
+    await db.execute({ sql: 'UPDATE route_images SET image_path=?, updated_at=CURRENT_TIMESTAMP WHERE route=? AND slot_type=?', args: [dataUrl, route, slot_type] });
+  } else {
+    await db.execute({ sql: 'INSERT INTO route_images (route,slot_type,image_path) VALUES (?,?,?)', args: [route, slot_type, dataUrl] });
+  }
+  res.json({ ok: true, path: dataUrl });
 });
 
 // ---- ADMINS ----
