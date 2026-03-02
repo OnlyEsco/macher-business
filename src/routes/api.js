@@ -87,10 +87,10 @@ router.post('/fahrzeuge', requireAuth, async (req, res) => {
 });
 
 router.put('/fahrzeuge/:id', requireAdmin, async (req, res) => {
-  const { name, kennzeichen, bemerkung } = req.body;
+  const { name, kennzeichen, bemerkung, von, bis } = req.body;
   await db.execute({
-    sql: 'UPDATE fahrzeuge SET name=?,kennzeichen=?,bemerkung=? WHERE id=?',
-    args: [name, kennzeichen, bemerkung||'', req.params.id]
+    sql: 'UPDATE fahrzeuge SET name=?,kennzeichen=?,bemerkung=?,von=?,bis=? WHERE id=?',
+    args: [name, kennzeichen, bemerkung||'', von||'', bis||'', req.params.id]
   });
   await db.execute({
     sql: 'INSERT INTO fahrzeug_logs (aktion,fahrzeug_id,kennzeichen,name,user_discord_id,user_name) VALUES (?,?,?,?,?,?)',
@@ -140,9 +140,15 @@ router.delete('/ankauf/:id', requireAdmin, async (req, res) => {
 
 router.get('/ankauf/stats', requireAdmin, async (req, res) => {
   const total = await db.execute('SELECT COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf');
-  const byArtikel = await db.execute('SELECT artikel, COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf GROUP BY artikel ORDER BY gesamt DESC');
+  const byArtikel = await db.execute('SELECT artikel, COUNT(*) as cnt, SUM(menge) as gesamtmenge, SUM(preis*menge) as gesamt FROM ankauf GROUP BY artikel ORDER BY gesamt DESC');
   const byAnkaefer = await db.execute('SELECT ankaefer, COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf GROUP BY ankaefer ORDER BY gesamt DESC');
   res.json({ total: total.rows[0], byArtikel: byArtikel.rows, byAnkaefer: byAnkaefer.rows });
+});
+
+// ---- ANKAUF CLEAR WEEK ----
+router.delete('/ankauf/clear-week', requireAdmin, async (req, res) => {
+  await db.execute("DELETE FROM ankauf WHERE created_at >= datetime('now', 'weekday 0', '-7 days')");
+  res.json({ ok: true });
 });
 
 // ---- ROUTEN ----
