@@ -5,13 +5,7 @@ import { db, isAdmin } from '../lib/db.js';
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-  destination: 'public/uploads/',
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 function requireAuth(req, res, next) {
   if (!req.user) return res.status(401).json({ error: 'Nicht eingeloggt' });
@@ -73,11 +67,11 @@ router.get('/fahrzeuge', requireAuth, async (req, res) => {
 });
 
 router.post('/fahrzeuge', requireAuth, async (req, res) => {
-  const { name, kennzeichen, bemerkung } = req.body;
+  const { name, kennzeichen, bemerkung, von, bis } = req.body;
   const addedBy = req.user.username || req.user.id;
   const result = await db.execute({
-    sql: 'INSERT INTO fahrzeuge (name,kennzeichen,bemerkung,added_by) VALUES (?,?,?,?)',
-    args: [name, kennzeichen, bemerkung||'', addedBy]
+    sql: 'INSERT INTO fahrzeuge (name,kennzeichen,bemerkung,von,bis,added_by) VALUES (?,?,?,?,?,?)',
+    args: [name, kennzeichen, bemerkung||'', von||'', bis||'', addedBy]
   });
   await db.execute({
     sql: 'INSERT INTO fahrzeug_logs (aktion,fahrzeug_id,kennzeichen,name,user_discord_id,user_name) VALUES (?,?,?,?,?,?)',
@@ -148,7 +142,7 @@ router.get('/ankauf/stats', requireAdmin, async (req, res) => {
 
 // ---- ANKAUF CLEAR WEEK ----
 router.delete('/ankauf/clear-week', requireAdmin, async (req, res) => {
-  await db.execute("DELETE FROM ankauf WHERE date(created_at) >= date('now', 'weekday 1', '-7 days')");
+  await db.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('week_reset', datetime('now'))");
   res.json({ ok: true });
 });
 
@@ -171,7 +165,7 @@ router.put('/routes/slot/:id', requireAdmin, async (req, res) => {
 router.post('/routes/image', requireAdmin, upload.single('image'), async (req, res) => {
   const { route, slot_type } = req.body;
   if (!req.file) return res.status(400).json({ error: 'Kein Bild' });
-  const image_path = '/uploads/' + req.file.filename;
+  const image_path = 'data:' + req.file.mimetype + ';base64,' + req.file.buffer.toString('base64');
   // upsert
   const existing = await db.execute({
     sql: 'SELECT id FROM route_images WHERE route=? AND slot_type=?',
