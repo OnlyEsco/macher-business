@@ -906,6 +906,16 @@
       </div>
       <div class="stats-grid" id="topverkaefer-grid" style="margin-bottom:28px"></div>
 
+      <!-- Gesamtstatistik (nicht clearbar) -->
+      <div class="section-header">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--text-bright);border-left:3px solid var(--red);padding-left:12px">📊 Gesamtstatistik</div>
+      </div>
+      <div class="stats-grid" id="alltime-stats" style="margin-bottom:8px"></div>
+      <div style="margin-bottom:28px">
+        <div style="font-family:'Share Tech Mono';font-size:11px;letter-spacing:2px;color:var(--red);margin-bottom:8px">GESAMTMENGE PRO ARTIKEL</div>
+        <div class="table-wrap"><table><thead><tr><th>Artikel</th><th>Gesamtmenge</th><th>Umsatz</th></tr></thead><tbody id="alltime-artikel"></tbody></table></div>
+      </div>
+
       <!-- Fahrzeug Logs -->
       <div class="section-header">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--text-bright);border-left:3px solid var(--red);padding-left:12px">Fahrzeug Logs</div>
@@ -1619,8 +1629,32 @@ function setupImageUploads() {
 // ===== ADMIN =====
 async function loadAdminData() {
   loadAnkaufStats();
+  loadAlltimeStats();
   loadFahrzeugLogs();
   if (currentUser?.isSuperAdmin) loadAdmins();
+}
+
+async function loadAlltimeStats() {
+  try {
+    const data = await api('/api/ankauf/stats/alltime');
+    document.getElementById('alltime-stats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-label">Gesamt Ankäufe (All Time)</div>
+        <div class="stat-value">${data.total.cnt}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Gesamt Umsatz (All Time)</div>
+        <div class="stat-value">${fmt(data.total.gesamt)}€</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Gesamt Menge (All Time)</div>
+        <div class="stat-value">${data.total.gesamtmenge||0}</div>
+      </div>
+    `;
+    document.getElementById('alltime-artikel').innerHTML = data.byArtikel.length ?
+      data.byArtikel.map(r => `<tr><td>${esc(r.artikel)}</td><td style="color:#ff8800;font-weight:700">${r.gesamtmenge}</td><td style="color:var(--red-bright)">${fmt(r.gesamt)}€</td></tr>`).join('') :
+      '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px">Keine Daten</td></tr>';
+  } catch(e) {}
 }
 
 async function loadAnkaufStats() {

@@ -138,9 +138,13 @@ router.post('/ankauf', requireAdmin, async (req, res) => {
   res.json({ id: Number(result.lastInsertRowid) });
 });
 
-router.delete('/ankauf/:id', requireAdmin, async (req, res) => {
-  await db.execute({ sql: 'DELETE FROM ankauf WHERE id=?', args: [req.params.id] });
-  res.json({ ok: true });
+
+router.get('/ankauf/stats/alltime', requireAdmin, async (req, res) => {
+  try {
+    const total = await db.execute('SELECT COUNT(*) as cnt, SUM(preis*menge) as gesamt, SUM(menge) as gesamtmenge FROM ankauf');
+    const byArtikel = await db.execute('SELECT artikel, SUM(menge) as gesamtmenge, SUM(preis*menge) as gesamt FROM ankauf GROUP BY artikel ORDER BY gesamtmenge DESC');
+    res.json({ total: total.rows[0], byArtikel: byArtikel.rows });
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 router.get('/ankauf/stats', requireAdmin, async (req, res) => {
@@ -159,7 +163,12 @@ router.delete('/ankauf/clear-week', requireAdmin, async (req, res) => {
     await db.execute({ sql: 'DELETE FROM ankauf WHERE id > 0', args: [] });
     res.json({ ok: true });
   } catch(e) { console.error('CLEAR ERROR:', e.message); res.status(500).json({ error: e.message }); }
-});;
+});
+
+router.delete('/ankauf/:id', requireAdmin, async (req, res) => {
+  await db.execute({ sql: 'DELETE FROM ankauf WHERE id=?', args: [req.params.id] });
+  res.json({ ok: true });
+});
 
 // ---- ROUTEN ----
 router.get('/routes', requireAuth, async (req, res) => {
