@@ -902,13 +902,14 @@
       <!-- Topverkäufer der Woche -->
       <div class="section-header">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--text-bright);border-left:3px solid var(--red);padding-left:12px">🏆 Topverkäufer der Woche</div>
-        <button class="btn btn-danger" onclick="clearTopverkaefer()">⟳ ZURÜCKSETZEN</button>
+        <button class="btn btn-danger" onclick="confirm('Topverkäufer zurücksetzen?', 'Die Statistik wird zurückgesetzt. Ankaufdaten bleiben erhalten.', clearTopverkaefer)">⟳ ZURÜCKSETZEN</button>
       </div>
       <div class="stats-grid" id="topverkaefer-grid" style="margin-bottom:28px"></div>
 
       <!-- Fahrzeug Logs -->
       <div class="section-header">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--text-bright);border-left:3px solid var(--red);padding-left:12px">Fahrzeug Logs</div>
+        <button class="btn btn-danger" onclick="clearFahrzeugLogs()">⟳ LOGS LÖSCHEN</button>
       </div>
       <div style="margin-bottom:14px">
         <input type="text" id="admin-fz-search" placeholder="🔍 Nach Kennzeichen filtern..."
@@ -917,7 +918,7 @@
       </div>
       <div class="table-wrap" style="margin-bottom:36px">
         <table>
-          <thead><tr><th>Zeit</th><th>Aktion</th><th>Fahrzeug</th><th>Kennzeichen</th><th>Von</th></tr></thead>
+          <thead><tr><th>Zeit</th><th>Aktion</th><th>Fahrzeug</th><th>Kennzeichen</th><th>Von</th><th>Bis</th><th>Bemerkung</th><th>Eingetragen von</th></tr></thead>
           <tbody id="fahrzeug-logs-body"></tbody>
         </table>
       </div>
@@ -1671,10 +1672,13 @@ function renderFahrzeugLogs(data) {
         <td><span style="color:${l.aktion==='HINZUGEFÜGT'?'#00cc44':l.aktion==='GELÖSCHT'?'var(--red)':'#ff8800'};font-weight:700">${l.aktion}</span></td>
         <td>${esc(l.name)}</td>
         <td class="mono">${esc(l.kennzeichen)}</td>
-        <td>${esc(l.user_name)}</td>
+        <td class="mono" style="font-size:12px">${fmtDT(l.von)}</td>
+        <td class="mono" style="font-size:12px">${fmtDT(l.bis)}</td>
+        <td style="font-size:13px">${esc(l.bemerkung||'')}</td>
+        <td style="color:var(--text-dim);font-size:13px">${esc(l.user_name)}</td>
       </tr>
     `).join('') :
-    '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px">Keine Logs</td></tr>';
+    '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:20px">Keine Logs</td></tr>';
 }
 
 function filterFahrzeugLogs() {
@@ -1690,12 +1694,20 @@ async function loadFahrzeugLogs() {
 }
 
 async function clearTopverkaefer() {
-  confirm('Topverkäufer zurücksetzen?', 'Alle Ankauf-Einträge dieser Woche werden gelöscht.', async () => {
+  try {
+    await api('/api/ankauf/clear-week', { method: 'DELETE' });
+    await loadAnkaufStats();
+    toast('Topverkäufer zurückgesetzt!', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function clearFahrzeugLogs() {
+  confirm('Fahrzeug Logs löschen?', 'Alle Fahrzeug Logs werden permanent gelöscht.', async () => {
     try {
-      await api('/api/ankauf/clear-week', { method: 'DELETE' });
-      loadAnkaufStats();
-      loadAnkauf();
-      toast('Topverkäufer zurückgesetzt!', 'success');
+      await api('/api/fahrzeug-logs/clear', { method: 'DELETE' });
+      allFahrzeugLogs = [];
+      renderFahrzeugLogs([]);
+      toast('Fahrzeug Logs gelöscht!', 'success');
     } catch(e) { toast(e.message, 'error'); }
   });
 }

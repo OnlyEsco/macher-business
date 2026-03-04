@@ -35,11 +35,18 @@ export async function initDB() {
     name TEXT NOT NULL,
     kennzeichen TEXT NOT NULL,
     bemerkung TEXT DEFAULT '',
+    von TEXT DEFAULT '',
+    bis TEXT DEFAULT '',
     added_by TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
-  // Add added_by column if not exists (for existing DBs)
+  try { await db.execute("ALTER TABLE fahrzeuge ADD COLUMN von TEXT DEFAULT ''"); } catch(e) {}
+  try { await db.execute("ALTER TABLE fahrzeuge ADD COLUMN bis TEXT DEFAULT ''"); } catch(e) {}
   try { await db.execute("ALTER TABLE fahrzeuge ADD COLUMN added_by TEXT DEFAULT ''"); } catch(e) {}
+  await exec(`CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  )`);
 
   await exec(`CREATE TABLE IF NOT EXISTS fahrzeug_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,10 +54,16 @@ export async function initDB() {
     fahrzeug_id INTEGER,
     kennzeichen TEXT,
     name TEXT,
+    von TEXT DEFAULT '',
+    bis TEXT DEFAULT '',
+    bemerkung TEXT DEFAULT '',
     user_discord_id TEXT,
     user_name TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+  try { await db.execute("ALTER TABLE fahrzeug_logs ADD COLUMN von TEXT DEFAULT ''"); } catch(e) {}
+  try { await db.execute("ALTER TABLE fahrzeug_logs ADD COLUMN bis TEXT DEFAULT ''"); } catch(e) {}
+  try { await db.execute("ALTER TABLE fahrzeug_logs ADD COLUMN bemerkung TEXT DEFAULT ''"); } catch(e) {}
 
   await exec(`CREATE TABLE IF NOT EXISTS ankauf (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -67,30 +67,34 @@ router.get('/fahrzeuge', requireAuth, async (req, res) => {
 });
 
 router.post('/fahrzeuge', requireAuth, async (req, res) => {
-  const { name, kennzeichen, bemerkung, von, bis } = req.body;
-  const addedBy = req.user.username || req.user.id;
-  const result = await db.execute({
-    sql: 'INSERT INTO fahrzeuge (name,kennzeichen,bemerkung,von,bis,added_by) VALUES (?,?,?,?,?,?)',
-    args: [name, kennzeichen, bemerkung||'', von||'', bis||'', addedBy]
-  });
-  await db.execute({
-    sql: 'INSERT INTO fahrzeug_logs (aktion,fahrzeug_id,kennzeichen,name,user_discord_id,user_name) VALUES (?,?,?,?,?,?)',
-    args: ['HINZUGEFÜGT', Number(result.lastInsertRowid), kennzeichen, name, req.user.id, req.user.username]
-  });
-  res.json({ id: Number(result.lastInsertRowid) });
+  try {
+    const { name, kennzeichen, bemerkung, von, bis } = req.body;
+    const addedBy = req.user.username || req.user.id;
+    const result = await db.execute({
+      sql: 'INSERT INTO fahrzeuge (name,kennzeichen,bemerkung,von,bis,added_by) VALUES (?,?,?,?,?,?)',
+      args: [name, kennzeichen, bemerkung||'', von||'', bis||'', addedBy]
+    });
+    await db.execute({
+      sql: 'INSERT INTO fahrzeug_logs (aktion,fahrzeug_id,kennzeichen,name,von,bis,bemerkung,user_discord_id,user_name) VALUES (?,?,?,?,?,?,?,?,?)',
+      args: ['HINZUGEFÜGT', Number(result.lastInsertRowid), kennzeichen, name, von||'', bis||'', bemerkung||'', req.user.id, req.user.username]
+    });
+    res.json({ id: Number(result.lastInsertRowid) });
+  } catch(e) { console.error('FAHRZEUG POST ERROR:', e.message); res.status(500).json({ error: e.message }); }
 });
 
 router.put('/fahrzeuge/:id', requireAdmin, async (req, res) => {
-  const { name, kennzeichen, bemerkung, von, bis } = req.body;
-  await db.execute({
-    sql: 'UPDATE fahrzeuge SET name=?,kennzeichen=?,bemerkung=?,von=?,bis=? WHERE id=?',
-    args: [name, kennzeichen, bemerkung||'', von||'', bis||'', req.params.id]
-  });
-  await db.execute({
-    sql: 'INSERT INTO fahrzeug_logs (aktion,fahrzeug_id,kennzeichen,name,user_discord_id,user_name) VALUES (?,?,?,?,?,?)',
-    args: ['BEARBEITET', req.params.id, kennzeichen, name, req.user.id, req.user.username]
-  });
-  res.json({ ok: true });
+  try {
+    const { name, kennzeichen, bemerkung, von, bis } = req.body;
+    await db.execute({
+      sql: 'UPDATE fahrzeuge SET name=?,kennzeichen=?,bemerkung=?,von=?,bis=? WHERE id=?',
+      args: [name, kennzeichen, bemerkung||'', von||'', bis||'', req.params.id]
+    });
+    await db.execute({
+      sql: 'INSERT INTO fahrzeug_logs (aktion,fahrzeug_id,kennzeichen,name,von,bis,bemerkung,user_discord_id,user_name) VALUES (?,?,?,?,?,?,?,?,?)',
+      args: ['BEARBEITET', req.params.id, kennzeichen, name, von||'', bis||'', bemerkung||'', req.user.id, req.user.username]
+    });
+    res.json({ ok: true });
+  } catch(e) { console.error('FAHRZEUG PUT ERROR:', e.message); res.status(500).json({ error: e.message }); }
 });
 
 router.delete('/fahrzeuge/:id', requireAdmin, async (req, res) => {
@@ -98,8 +102,8 @@ router.delete('/fahrzeuge/:id', requireAdmin, async (req, res) => {
   if (existing.rows.length > 0) {
     const f = existing.rows[0];
     await db.execute({
-      sql: 'INSERT INTO fahrzeug_logs (aktion,fahrzeug_id,kennzeichen,name,user_discord_id,user_name) VALUES (?,?,?,?,?,?)',
-      args: ['GELÖSCHT', req.params.id, f.kennzeichen, f.name, req.user.id, req.user.username]
+      sql: 'INSERT INTO fahrzeug_logs (aktion,fahrzeug_id,kennzeichen,name,von,bis,bemerkung,user_discord_id,user_name) VALUES (?,?,?,?,?,?,?,?,?)',
+      args: ['GELÖSCHT', req.params.id, f.kennzeichen, f.name, f.von||'', f.bis||'', f.bemerkung||'', req.user.id, req.user.username]
     });
   }
   await db.execute({ sql: 'DELETE FROM fahrzeuge WHERE id=?', args: [req.params.id] });
@@ -107,6 +111,13 @@ router.delete('/fahrzeuge/:id', requireAdmin, async (req, res) => {
 });
 
 // ---- FAHRZEUG LOGS ----
+router.delete('/fahrzeug-logs/clear', requireAdmin, async (req, res) => {
+  try {
+    await db.execute('DELETE FROM fahrzeug_logs');
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 router.get('/fahrzeug-logs', requireAdmin, async (req, res) => {
   const rows = await db.execute('SELECT * FROM fahrzeug_logs ORDER BY created_at DESC LIMIT 200');
   res.json(rows.rows);
@@ -133,18 +144,22 @@ router.delete('/ankauf/:id', requireAdmin, async (req, res) => {
 });
 
 router.get('/ankauf/stats', requireAdmin, async (req, res) => {
-  const total = await db.execute('SELECT COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf');
-  const byArtikel = await db.execute('SELECT artikel, COUNT(*) as cnt, SUM(menge) as gesamtmenge, SUM(preis*menge) as gesamt FROM ankauf GROUP BY artikel ORDER BY gesamt DESC');
-  const byVerkaeufer = await db.execute('SELECT verkaeufer, COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf WHERE verkaeufer != \'\' GROUP BY verkaeufer ORDER BY cnt DESC');
-  const byAnkaefer = await db.execute('SELECT ankaefer, COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf GROUP BY ankaefer ORDER BY gesamt DESC');
-  res.json({ total: total.rows[0], byArtikel: byArtikel.rows, byAnkaefer: byAnkaefer.rows, byVerkaeufer: byVerkaeufer.rows });
-});
+  try {
+    const total = await db.execute('SELECT COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf');
+    const byArtikel = await db.execute('SELECT artikel, COUNT(*) as cnt, SUM(menge) as gesamtmenge, SUM(preis*menge) as gesamt FROM ankauf GROUP BY artikel ORDER BY gesamt DESC');
+    const byAnkaefer = await db.execute('SELECT ankaefer, COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf GROUP BY ankaefer ORDER BY cnt DESC');
+    const byVerkaeufer = await db.execute("SELECT verkaeufer, COUNT(*) as cnt, SUM(preis*menge) as gesamt FROM ankauf WHERE verkaeufer != '' GROUP BY verkaeufer ORDER BY cnt DESC");
+    res.json({ total: total.rows[0], byArtikel: byArtikel.rows, byAnkaefer: byAnkaefer.rows, byVerkaeufer: byVerkaeufer.rows });
+  } catch(e) { console.error('STATS ERROR:', e.message); res.status(500).json({ error: e.message }); }
+});;
 
 // ---- ANKAUF CLEAR WEEK ----
 router.delete('/ankauf/clear-week', requireAdmin, async (req, res) => {
-  await db.execute("INSERT OR REPLACE INTO settings (key,value) VALUES ('week_reset', datetime('now'))");
-  res.json({ ok: true });
-});
+  try {
+    await db.execute({ sql: 'DELETE FROM ankauf WHERE id > 0', args: [] });
+    res.json({ ok: true });
+  } catch(e) { console.error('CLEAR ERROR:', e.message); res.status(500).json({ error: e.message }); }
+});;
 
 // ---- ROUTEN ----
 router.get('/routes', requireAuth, async (req, res) => {
